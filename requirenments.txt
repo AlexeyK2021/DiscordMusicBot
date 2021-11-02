@@ -1,4 +1,5 @@
 discord
+youtube-dl
 pafy
 python-vlc
 PyNaCl

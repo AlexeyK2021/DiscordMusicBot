@@ -1,3 +1,6 @@
+import os
+import sys
+
 import discord
 import youtube_dl
 from discord import FFmpegPCMAudio
@@ -7,7 +10,6 @@ import pafy
 from discord.utils import get
 from youtube_dl import YoutubeDL
 
-from bot import client
 from config import settings
 
 bot = commands.Bot(settings['prefix'])
@@ -42,12 +44,24 @@ async def hello(ctx):  # Создаём функцию и передаём ар�
     # player.play()
 #
 #     await ctx.send('playing ' + arg)
-
+queue = []
 @bot.command('play')
 async def play(ctx):
-    voicechannel = discord.utils.get(ctx.guild.channels, name='queue')
+    voicechannel = ctx.author.voice.channel
     vc = await voicechannel.connect()
     vc.play(discord.FFmpegPCMAudio("Def Leppard - Hysteria (Radio Edit).mp3"))
+
+async def console():
+    command = input()
+    if command == "stop":
+        await leave()
+        sys.exit()
+
+def findMP3(path):
+    for file in os.listdir(path):
+        filename, file_extension = os.path.splitext(file)
+        if file_extension == ".mp3":
+            queue.append(file)
 
 
 @bot.command('pause')
