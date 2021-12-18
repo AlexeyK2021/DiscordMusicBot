@@ -1,4 +1,5 @@
 import sys
+import os
 import discord
 import youtube_dl
 from discord.ext import commands
@@ -7,51 +8,41 @@ from config import settings
 IsAlreadyConnectedToChannel = False
 bot = commands.Bot(settings['prefix'])
 DL = youtube_dl.YoutubeDL
+NowPlaying = ""
 
 
 def main():
     @bot.command('hello')  # Не передаём аргумент pass_context, так как он был нужен в старых версиях.
     async def hello(ctx):  # Создаём функцию и передаём аргумент ctx.
         author = ctx.message.author  # Объявляем переменную author и записываем туда информацию об авторе.
-        await ctx.send(f'Hello, {author.mention}! :grinning: ')
+        hello_text = "Hello " + author.mention + " :grinning:"
+        await discordPrint(ctx=ctx, text=hello_text)
 
-    # @bot.command('play')
-    # async def play(ctx, arg):
-    # try:
-    #     server = ctx.message.guild
-    #     voice_channel = server.voice_client
-    #     async with ctx.typing():
-    #         voice_channel.play(discord.FFmpegPCMAudio("ffmpeg.exe"))
-    #     await ctx.send('**Now playing:** {'+arg+"}")
-    # except:
-    #     await ctx.send("The bot is not connected to a voice channel.")
-
-    # print(ctx.message, arg)
-    # video = pafy.new(arg)
-    # best = video.getbest()
-    # playurl = best.url
-    # Instance = vlc.Instance()
-    # player = Instance.media_player_new()
-    # Media = Instance.media_new(playurl)
-    # Media.get_mrl()
-    # player.set_media(Media)
-    # player.play()
-    #
-    # await ctx.send('playing ' + arg)
-    # queue = []
+    async def discordPrint(text, ctx):
+        await ctx.send(text)
 
     @bot.command('play')
     async def play(ctx, url):
-        global IsAlreadyConnectedToChannel, voiceChannel
+        global IsAlreadyConnectedToChannel, voice_channel
         if not IsAlreadyConnectedToChannel:
-            voiceChannel = ctx.author.voice.channel
+            voice_channel = ctx.author.voice.channel
+            vc = await voice_channel.connect()
             IsAlreadyConnectedToChannel = True
-        # downloader = youtube_dl.YoutubeDL
-        # downloader.download(self=downloader, url_list=url)
-        # downloader.format_resolution(format="bestaudio")
-        vc = await voiceChannel.connect()
-        # vc.play(discord.FFmpegPCMAudio("Godsmack - When Legends Rise.mp3", executable="ffmpeg.exe"))
-        vc.play(discord.FFmpegPCMAudio(url))
+        ydl_opts = {'format': 'bestaudio'}
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            URL = info['formats'][0]['url']
+        print(info)
+        embed = discord.Embed(
+            title="Now Playing",
+            description=info['title'],
+            color=discord.Color.dark_blue()
+        )
+        await ctx.send(embed=embed)
+        try:
+            await vc.play(discord.FFmpegPCMAudio(URL))
+        except Exception:
+            print("Player Error")
 
     async def console():
         command = input()
@@ -91,11 +82,11 @@ def main():
 
     @bot.command('join')
     async def join(ctx):
-        global IsAlreadyConnectedToChannel, voiceChannel
+        global IsAlreadyConnectedToChannel, voice_channel
         if not IsAlreadyConnectedToChannel:
-            voiceChannel = ctx.author.voice.channel
+            voice_channel = ctx.author.voice.channel
             IsAlreadyConnectedToChannel = True
-            await voiceChannel.connect()
+            await voice_channel.connect()
 
     @bot.command('leave')
     async def leave(ctx):
@@ -103,10 +94,6 @@ def main():
         if IsAlreadyConnectedToChannel:
             IsAlreadyConnectedToChannel = False
             await ctx.voice_client.disconnect()
-
-    @bot.command('testing')
-    async def testing(ctx, *args):
-        await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
 
     bot.run(settings['token'])
 
