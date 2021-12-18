@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+
 import discord
 import youtube_dl
 from discord.ext import commands
@@ -12,18 +14,15 @@ NowPlaying = ""
 
 
 def main():
-    @bot.command('hello')  # Не передаём аргумент pass_context, так как он был нужен в старых версиях.
-    async def hello(ctx):  # Создаём функцию и передаём аргумент ctx.
-        author = ctx.message.author  # Объявляем переменную author и записываем туда информацию об авторе.
+    @bot.command('hello')
+    async def hello(ctx):
+        author = ctx.message.author
         hello_text = "Hello " + author.mention + " :grinning:"
-        await discordPrint(ctx=ctx, text=hello_text)
-
-    async def discordPrint(text, ctx):
-        await ctx.send(text)
+        await ctx.send(ctx=ctx, text=hello_text)
 
     @bot.command('play')
     async def play(ctx, url):
-        global IsAlreadyConnectedToChannel, voice_channel
+        global IsAlreadyConnectedToChannel, voice_channel, vc
         if not IsAlreadyConnectedToChannel:
             voice_channel = ctx.author.voice.channel
             vc = await voice_channel.connect()
@@ -32,15 +31,20 @@ def main():
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             URL = info['formats'][0]['url']
-        print(info)
+        # print(info)
         embed = discord.Embed(
             title="Now Playing",
             description=info['title'],
             color=discord.Color.dark_blue()
         )
+        embed.set_thumbnail(url=URL)
+
         await ctx.send(embed=embed)
         try:
-            await vc.play(discord.FFmpegPCMAudio(URL))
+            if vc.is_playing():
+                await stop(ctx)
+            time.sleep(1)
+            vc.play(discord.FFmpegPCMAudio(URL))
         except Exception:
             print("Player Error")
 
@@ -60,7 +64,7 @@ def main():
     async def pause(ctx):
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_playing():
-            await voice_client.pause()
+            voice_client.pause()
         else:
             await ctx.send("The bot is not playing anything at the moment.")
 
@@ -68,7 +72,7 @@ def main():
     async def resume(ctx):
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_paused():
-            await voice_client.resume()
+            voice_client.resume()
         else:
             await ctx.send("The bot was not playing anything before this. Use !play command")
 
