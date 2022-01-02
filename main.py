@@ -1,5 +1,4 @@
 import sys
-import os
 import time
 
 import discord
@@ -28,18 +27,21 @@ def main():
             vc = await voice_channel.connect()
             IsAlreadyConnectedToChannel = True
         ydl_opts = {'format': 'bestaudio'}
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            URL = info['formats'][0]['url']
+        if "youtu.be" in url:
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                URL = info['formats'][0]['url']
+        else:
+            URL = url  # для тестов
         # print(info)
-        embed = discord.Embed(
-            title="Now Playing",
-            description=info['title'],
-            color=discord.Color.dark_blue()
-        )
-        embed.set_thumbnail(url=URL)
+        # embed = discord.Embed(
+        #     title="Now Playing",
+        #     description=info['title'],
+        #     color=discord.Color.dark_blue()
+        # )
+        # embed.set_thumbnail(url=URL)
 
-        await ctx.send(embed=embed)
+        # await ctx.send(embed=embed)
         try:
             if vc.is_playing():
                 await stop(ctx)
@@ -80,7 +82,7 @@ def main():
     async def stop(ctx):
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_playing():
-            await voice_client.stop()
+            voice_client.stop()
         else:
             await ctx.send("The bot is not playing anything at the moment.")
 
