@@ -9,8 +9,6 @@ from config import settings
 IsAlreadyConnectedToChannel = False
 bot = commands.Bot(settings['prefix'])
 DL = youtube_dl.YoutubeDL
-NowPlaying = ""
-
 
 def main():
     @bot.command('hello')
@@ -49,12 +47,6 @@ def main():
             vc.play(discord.FFmpegPCMAudio(URL))
         except Exception:
             print("Player Error")
-
-    async def console():
-        command = input()
-        if command == "stop":
-            await leave()
-            sys.exit()
 
     # def findMP3(path):
     #     for file in os.listdir(path):
