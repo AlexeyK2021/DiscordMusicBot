@@ -19,6 +19,7 @@ def main():
     @bot.command('play')
     async def play(ctx, url):
         global IsAlreadyConnectedToChannel, voice_channel, vc, playing_now
+        print("Discord command: !play " + str(url))
         if not IsAlreadyConnectedToChannel:
             voice_channel = ctx.author.voice.channel
             vc = await voice_channel.connect()
@@ -66,21 +67,25 @@ def main():
     async def run_music(ctx):
         global playing_now, vc
         if not vc.is_playing():
-            playing_now = queue.pop(0)
-            vc.play(source=discord.FFmpegPCMAudio(playing_now.music_url))
+            if len(queue) > 0:
+                playing_now = queue.pop(0)
+                vc.play(source=discord.FFmpegPCMAudio(playing_now.music_url), after=lambda e: run_music(ctx))
 
-            embed = discord.Embed(
-                title="Now Playing from YouTube",
-                color=discord.Color.random()
-            )
-            embed.set_thumbnail(url=playing_now.image_link)
-            embed.add_field(name="Channel", value=playing_now.channel)
-            embed.add_field(name="Track", value=playing_now.name)
-            embed.add_field(name="Duration", value=playing_now.get_duration())
-            await ctx.send(embed=embed)
+                embed = discord.Embed(
+                    title="Now Playing from YouTube",
+                    color=discord.Color.random()
+                )
+                embed.set_thumbnail(url=playing_now.image_link)
+                embed.add_field(name="Channel", value=playing_now.channel)
+                embed.add_field(name="Track", value=playing_now.name)
+                embed.add_field(name="Duration", value=playing_now.get_duration())
+                await ctx.send(embed=embed)
+            else:
+                ctx.send(ctx=ctx, text="No music in queue!")
 
     @bot.command('pause')
     async def pause(ctx):
+        print("Discord command: !pause ")
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_playing():
             voice_client.pause()
@@ -89,6 +94,7 @@ def main():
 
     @bot.command('resume')
     async def resume(ctx):
+        print("Discord command: !resume ")
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_paused():
             voice_client.resume()
@@ -97,6 +103,7 @@ def main():
 
     @bot.command('stop')
     async def stop(ctx):
+        print("Discord command: !stop ")
         voice_client = ctx.message.guild.voice_client
         if voice_client.is_playing():
             voice_client.stop()
@@ -106,6 +113,7 @@ def main():
     @bot.command('join')
     async def join(ctx):
         global IsAlreadyConnectedToChannel, voice_channel
+        print("Discord command: !join ")
         if not IsAlreadyConnectedToChannel:
             voice_channel = ctx.author.voice.channel
             IsAlreadyConnectedToChannel = True
@@ -113,6 +121,7 @@ def main():
 
     @bot.command('leave')
     async def leave(ctx):
+        print("Discord command: !leave ")
         global IsAlreadyConnectedToChannel
         if IsAlreadyConnectedToChannel:
             IsAlreadyConnectedToChannel = False
