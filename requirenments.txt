@@ -3,3 +3,6 @@ youtube-dl
 pafy
 python-vlc
 PyNaCl
+requests
+re
+bs4
